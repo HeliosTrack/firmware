@@ -13,6 +13,7 @@
 #include "buzz.h"
 
 #include "FSCommon.h"
+#include "SDManager.h"
 #include "Led.h"
 #include "RTC.h"
 #include "SPILock.h"
@@ -116,6 +117,10 @@ AudioThread *audioThread = nullptr;
 #if defined(TCXO_OPTIONAL)
 float tcxoVoltage = SX126X_DIO3_TCXO_VOLTAGE; // if TCXO is optional, put this here so it can be changed further down.
 #endif
+
+#define SD_CS_PIN  47  // CS de la carte SD sur le T-BEAM-S3 SUPREME
+
+SDManager sdManager(SD_CS_PIN);
 
 using namespace concurrency;
 
@@ -242,6 +247,12 @@ void printInfo()
 #ifndef PIO_UNIT_TESTING
 void setup()
 {
+
+    const char *filename = "/log.txt";
+
+    String data = "TEST";
+    sdManager.appendToFile(filename, data);
+
     concurrency::hasBeenSetup = true;
 #if ARCH_PORTDUINO
     SPISettings spiSettings(settingsMap[spiSpeed], MSBFIRST, SPI_MODE0);
