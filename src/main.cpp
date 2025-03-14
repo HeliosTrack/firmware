@@ -13,6 +13,7 @@
 #include "buzz.h"
 
 #include "FSCommon.h"
+#include "SDLogger.h"
 #include "Led.h"
 #include "RTC.h"
 #include "SPILock.h"
@@ -26,8 +27,6 @@
 #if !MESHTASTIC_EXCLUDE_I2C
 #include "detect/ScanI2CTwoWire.h"
 #include <Wire.h>
-#include <SD.h>
-#include <SPI.h>
 #endif
 #include "detect/einkScan.h"
 #include "graphics/RAKled.h"
@@ -1147,6 +1146,8 @@ void setup()
     PowerFSM_setup(); // we will transition to ON in a couple of seconds, FIXME, only do this for cold boots, not waking from SDS
     powerFSMthread = new PowerFSMThread();
     setCPUFast(false); // 80MHz is fine for our slow peripherals
+
+initSDCard();
 }
 #endif
 uint32_t rebootAtMsec;   // If not zero we will reboot at this time (used to reboot shortly after the update completes)
@@ -1179,43 +1180,9 @@ extern meshtastic_DeviceMetadata getDeviceMetadata()
 void loop()
 {
 
-    
-const char *logFilePath = "/log.txt"; // Chemin du fichier log
-// Vérifier si le fichier existe
-if (!SD.begin(SDCARD_CS)) {
-    Serial.println("⚠️ Échec du montage de la carte SD !");
-    return;
-}
 
-Serial.println("✅ Carte SD détectée et montée avec succès.");
+appendToLog(25.3, 48.7, 1024);
 
-// Vérifier si le fichier existe
-if (SD.exists(logFilePath)) {
-    Serial.println("📁 Le fichier log.txt existe déjà.");
-} else {
-    // Créer le fichier s'il n'existe pas
-    File logFile = SD.open(logFilePath, FILE_WRITE);
-    if (logFile) {
-        Serial.println("✅ Fichier log.txt créé avec succès !");
-        logFile.close();
-    } else {
-        Serial.println("❌ Échec de la création du fichier log.txt !");
-        return;
-    }
-}
-
-// Ouvrir le fichier en mode ajout
-File logFile = SD.open(logFilePath, FILE_APPEND);
-if (logFile) {
-    logFile.println("cornichons"); // Écrire dans le fichier
-    logFile.flush(); // Forcer l'écriture
-    logFile.close();
-    Serial.println("📝 Texte ajouté dans log.txt !");
-} else {
-    Serial.println("❌ Impossible d'ouvrir log.txt pour écriture !");
-}
-
-    
 
 #ifdef ARCH_ESP32
     esp32Loop();
