@@ -13,7 +13,6 @@
 #include "buzz.h"
 
 #include "FSCommon.h"
-#include "SDManager.h"
 #include "Led.h"
 #include "RTC.h"
 #include "SPILock.h"
@@ -27,6 +26,8 @@
 #if !MESHTASTIC_EXCLUDE_I2C
 #include "detect/ScanI2CTwoWire.h"
 #include <Wire.h>
+#include <SD.h>
+#include <SPI.h>
 #endif
 #include "detect/einkScan.h"
 #include "graphics/RAKled.h"
@@ -120,8 +121,6 @@ float tcxoVoltage = SX126X_DIO3_TCXO_VOLTAGE; // if TCXO is optional, put this h
 
 #define SD_CS_PIN  47  // CS de la carte SD sur le T-BEAM-S3 SUPREME
 
-SDManager sdManager(SD_CS_PIN);
-
 using namespace concurrency;
 
 volatile static const char slipstreamTZString[] = USERPREFS_TZ_STRING;
@@ -169,6 +168,7 @@ LoRaRadioType radioType = NO_RADIO;
 bool isVibrating = false;
 
 bool eink_found = true;
+bool isSDCardDetected = false;
 
 uint32_t serialSinceMsec;
 bool pauseBluetoothLogging = false;
@@ -181,6 +181,7 @@ std::pair<uint8_t, TwoWire *> nodeTelemetrySensorsMap[_meshtastic_TelemetrySenso
 #endif
 
 Router *router = NULL; // Users of router don't care what sort of subclass implements that API
+
 
 const char *getDeviceName()
 {
@@ -248,10 +249,7 @@ void printInfo()
 void setup()
 {
 
-    const char *filename = "/log.txt";
 
-    String data = "TEST";
-    sdManager.appendToFile(filename, data);
 
     concurrency::hasBeenSetup = true;
 #if ARCH_PORTDUINO
@@ -1180,7 +1178,44 @@ extern meshtastic_DeviceMetadata getDeviceMetadata()
 #ifndef PIO_UNIT_TESTING
 void loop()
 {
-    runASAP = false;
+
+    
+const char *logFilePath = "/log.txt"; // Chemin du fichier log
+// Vérifier si le fichier existe
+if (!SD.begin(SDCARD_CS)) {
+    Serial.println("⚠️ Échec du montage de la carte SD !");
+    return;
+}
+
+Serial.println("✅ Carte SD détectée et montée avec succès.");
+
+// Vérifier si le fichier existe
+if (SD.exists(logFilePath)) {
+    Serial.println("📁 Le fichier log.txt existe déjà.");
+} else {
+    // Créer le fichier s'il n'existe pas
+    File logFile = SD.open(logFilePath, FILE_WRITE);
+    if (logFile) {
+        Serial.println("✅ Fichier log.txt créé avec succès !");
+        logFile.close();
+    } else {
+        Serial.println("❌ Échec de la création du fichier log.txt !");
+        return;
+    }
+}
+
+// Ouvrir le fichier en mode ajout
+File logFile = SD.open(logFilePath, FILE_APPEND);
+if (logFile) {
+    logFile.println("cornichons"); // Écrire dans le fichier
+    logFile.flush(); // Forcer l'écriture
+    logFile.close();
+    Serial.println("📝 Texte ajouté dans log.txt !");
+} else {
+    Serial.println("❌ Impossible d'ouvrir log.txt pour écriture !");
+}
+
+    
 
 #ifdef ARCH_ESP32
     esp32Loop();
