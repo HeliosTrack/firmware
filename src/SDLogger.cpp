@@ -21,7 +21,7 @@ void initSDCard() {
     }
 }
 
-void appendToLog(float param1, float param2, int param3) {
+void appendToLog(float param1, float param2) {
     File logFile = SD.open(logFilePath, FILE_APPEND);
     if (logFile) {
         unsigned long timestamp = millis();
@@ -30,8 +30,7 @@ void appendToLog(float param1, float param2, int param3) {
         logFile.print(param1);
         logFile.print(",");
         logFile.print(param2);
-        logFile.print(",");
-        logFile.println(param3);
+        logFile.println("");
         logFile.close();
         Serial.println("📝 Données ajoutées !");
     } else {

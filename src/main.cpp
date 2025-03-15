@@ -32,6 +32,7 @@
 #include "graphics/RAKled.h"
 #include "graphics/Screen.h"
 #include "main.h"
+#include "modules/Telemetry/Sensor/BME280Sensor.h"
 #include "mesh/generated/meshtastic/config.pb.h"
 #include "meshUtils.h"
 #include "modules/Modules.h"
@@ -181,6 +182,7 @@ std::pair<uint8_t, TwoWire *> nodeTelemetrySensorsMap[_meshtastic_TelemetrySenso
 
 Router *router = NULL; // Users of router don't care what sort of subclass implements that API
 
+extern BME280Sensor bme280Sensor;
 
 const char *getDeviceName()
 {
@@ -240,6 +242,38 @@ void lateInitVariant() {}
 /**
  * Print info as a structured log message (for automated log processing)
  */
+
+static Periodic *temperatureAndPressurePeriodic;
+
+void GetTemperatureAndPressureAndSaveIt()
+{
+    meshtastic_Telemetry telemetryData;
+
+    // Appeler la fonction getMetrics pour remplir le struct `telemetryData`
+    if (bme280Sensor.getMetrics(&telemetryData)) {
+        // Vérifier si les données sont valides
+        if (telemetryData.variant.environment_metrics.has_temperature) {
+            float temperature = telemetryData.variant.environment_metrics.temperature;
+            LOG_INFO("Temperature: %.2f°C", temperature);
+        }
+        
+        if (telemetryData.variant.environment_metrics.has_barometric_pressure) {
+            float pressure = telemetryData.variant.environment_metrics.barometric_pressure;
+            LOG_INFO("Pressure: %.2f hPa", pressure);
+        }
+        appendToLog(telemetryData.variant.environment_metrics.temperature, telemetryData.variant.environment_metrics.barometric_pressure);
+    } else {
+        LOG_ERROR("Failed to retrieve metrics from BME280 sensor.");
+    }
+}
+
+static int32_t callGetTemperatureAndPressureAndSaveIt()
+{
+    GetTemperatureAndPressureAndSaveIt();
+    return 1000; // Retourne 1000 ms pour appeler cette fonction toutes les secondes
+}
+
+
 void printInfo()
 {
     LOG_INFO("S:B:%d,%s", HW_VENDOR, optstr(APP_VERSION));
@@ -1148,6 +1182,8 @@ void setup()
     setCPUFast(false); // 80MHz is fine for our slow peripherals
 
 initSDCard();
+bme280Sensor.runOnce();
+temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
 }
 #endif
 uint32_t rebootAtMsec;   // If not zero we will reboot at this time (used to reboot shortly after the update completes)
@@ -1176,13 +1212,11 @@ extern meshtastic_DeviceMetadata getDeviceMetadata()
 #endif
     return deviceMetadata;
 }
+
+
 #ifndef PIO_UNIT_TESTING
 void loop()
 {
-
-
-appendToLog(25.3, 48.7, 1024);
-
 
 #ifdef ARCH_ESP32
     esp32Loop();
@@ -1204,7 +1238,7 @@ appendToLog(25.3, 48.7, 1024);
 
     long delayMsec = mainController.runOrDelay();
 
-    // We want to sleep as long as possible here - because it saves power
+    // On veut dormir aussi longtemps que possible ici - pour économiser de l'énergie
     if (!runASAP && loopCanSleep()) {
         mainDelay.delay(delayMsec);
     }
