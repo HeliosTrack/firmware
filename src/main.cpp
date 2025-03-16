@@ -13,6 +13,8 @@
 #include "buzz.h"
 
 #include "FSCommon.h"
+#include "State.h"
+#include "motion/QMI8658/qmi.h"
 #include "SDLogger.h"
 #include "Led.h"
 #include "RTC.h"
@@ -184,6 +186,7 @@ Router *router = NULL; // Users of router don't care what sort of subclass imple
 
 extern BME280Sensor bme280Sensor;
 
+
 const char *getDeviceName()
 {
     uint8_t dmac[6];
@@ -270,7 +273,7 @@ void GetTemperatureAndPressureAndSaveIt()
 static int32_t callGetTemperatureAndPressureAndSaveIt()
 {
     GetTemperatureAndPressureAndSaveIt();
-    return 1000; // Retourne 1000 ms pour appeler cette fonction toutes les secondes
+    return 900;
 }
 
 
@@ -1182,8 +1185,12 @@ void setup()
     setCPUFast(false); // 80MHz is fine for our slow peripherals
 
 initSDCard();
+
 bme280Sensor.runOnce();
 temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
+
+RunOnceQMI();
+
 }
 #endif
 uint32_t rebootAtMsec;   // If not zero we will reboot at this time (used to reboot shortly after the update completes)
@@ -1217,6 +1224,8 @@ extern meshtastic_DeviceMetadata getDeviceMetadata()
 #ifndef PIO_UNIT_TESTING
 void loop()
 {
+
+verifierGyroscope();
 
 #ifdef ARCH_ESP32
     esp32Loop();
