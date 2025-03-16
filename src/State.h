@@ -1,8 +1,13 @@
-#include "motion/QMI8658/qmi.h"
-#pragma once
+#ifndef STATE_H
+#define STATE_H
 
-extern unsigned long startTime;
-extern bool mouvementDetecte;
+#include <Arduino.h>
+#include "motion/QMI8658/qmi.h"
+
 extern bool arretRecuperation;
+extern bool mouvementDetecte;
+extern unsigned long startTime;
 
 bool verifierGyroscope();
+
+#endif // STATE_H

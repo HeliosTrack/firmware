@@ -1225,7 +1225,11 @@ extern meshtastic_DeviceMetadata getDeviceMetadata()
 void loop()
 {
 
-verifierGyroscope();
+if (!verifierGyroscope()){
+    Serial.println("IDLE");
+} else {
+    Serial.println("Sending...");
+}
 
 #ifdef ARCH_ESP32
     esp32Loop();
