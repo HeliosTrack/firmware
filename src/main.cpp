@@ -16,6 +16,7 @@
 #include "State.h"
 #include "motion/QMI8658/qmi.h"
 #include "SDLogger.h"
+#include "bmerawdata.h"
 #include "Led.h"
 #include "RTC.h"
 #include "SPILock.h"
@@ -156,6 +157,7 @@ ScanI2C::DeviceAddress accelerometer_found = ScanI2C::ADDRESS_NONE;
 // The I2C address of the RGB LED (if found)
 ScanI2C::FoundDevice rgb_found = ScanI2C::FoundDevice(ScanI2C::DeviceType::NONE, ScanI2C::ADDRESS_NONE);
 
+
 #if !defined(ARCH_PORTDUINO) && !defined(ARCH_STM32WL)
 ATECCX08A atecc;
 #endif
@@ -176,6 +178,8 @@ uint32_t serialSinceMsec;
 bool pauseBluetoothLogging = false;
 
 bool pmu_found;
+
+BMERawData bmeSensor;
 
 #if !MESHTASTIC_EXCLUDE_I2C
 // Array map of sensor types with i2c address and wire as we'll find in the i2c scan
@@ -630,7 +634,7 @@ void setup()
     }
 
     SCANNER_TO_SENSORS_MAP(ScanI2C::DeviceType::BME_680, meshtastic_TelemetrySensorType_BME680)
-    SCANNER_TO_SENSORS_MAP(ScanI2C::DeviceType::BME_280, meshtastic_TelemetrySensorType_BME280)
+    // SCANNER_TO_SENSORS_MAP(ScanI2C::DeviceType::BME_280, meshtastic_TelemetrySensorType_BME280)
     SCANNER_TO_SENSORS_MAP(ScanI2C::DeviceType::BMP_280, meshtastic_TelemetrySensorType_BMP280)
     SCANNER_TO_SENSORS_MAP(ScanI2C::DeviceType::BMP_3XX, meshtastic_TelemetrySensorType_BMP3XX)
     SCANNER_TO_SENSORS_MAP(ScanI2C::DeviceType::BMP_085, meshtastic_TelemetrySensorType_BMP085)
@@ -1186,10 +1190,12 @@ void setup()
 
 initSDCard();
 
-bme280Sensor.runOnce();
-temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
+// bme280Sensor.runOnce();
+// temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
 
 RunOnceQMI();
+
+bmeSensor.begin();
 
 }
 #endif
@@ -1225,11 +1231,13 @@ extern meshtastic_DeviceMetadata getDeviceMetadata()
 void loop()
 {
 
-if (!verifierGyroscope()){
-    Serial.println("IDLE");
-} else {
-    Serial.println("Sending...");
-}
+bmeSensor.logData();
+
+// if (!verifierGyroscope()){
+//     Serial.println("IDLE");
+// } else {
+//     Serial.println("Sending...");
+// }
 
 #ifdef ARCH_ESP32
     esp32Loop();

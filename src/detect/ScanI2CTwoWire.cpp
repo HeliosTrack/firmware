@@ -262,16 +262,11 @@ void ScanI2CTwoWire::scanPort(I2CPort port, uint8_t *address, uint8_t asize)
                 SCAN_SIMPLE_CASE(XPOWERS_AXP192_AXP2101_ADDRESS, PMU_AXP192_AXP2101, "axp192/axp2101 PMU found")
 #endif
             case BME_ADDR:
-            case BME_ADDR_ALTERNATE:
                 registerValue = getRegisterValue(ScanI2CTwoWire::RegisterLocation(addr, 0xD0), 1); // GET_ID
                 switch (registerValue) {
                 case 0x61:
                     LOG_INFO("BME-680 sensor found at address 0x%x", (uint8_t)addr.address);
                     type = BME_680;
-                    break;
-                case 0x60:
-                    LOG_INFO("BME-280 sensor found at address 0x%x", (uint8_t)addr.address);
-                    type = BME_280;
                     break;
                 case 0x55:
                     LOG_INFO("BMP-085 or BMP-180 sensor found at address 0x%x", (uint8_t)addr.address);

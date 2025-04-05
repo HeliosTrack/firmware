@@ -21,7 +21,6 @@ class ScanI2C
         RAK14004,
         PMU_AXP192_AXP2101,
         BME_680,
-        BME_280,
         BMP_280,
         BMP_085,
         BMP_3XX,
