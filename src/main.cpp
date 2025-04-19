@@ -48,6 +48,11 @@
 #include "mesh/MeshModule.h"
 #include "mesh/MeshService.h"
 #include "mesh/generated/meshtastic/portnums.pb.h"
+// #include "mesh/MeshPacket.h"
+
+
+#include <Arduino.h>
+#include "ServoControl.h"
 
 #ifdef ARCH_ESP32
 #if !MESHTASTIC_EXCLUDE_WEBSERVER
@@ -194,7 +199,7 @@ std::pair<uint8_t, TwoWire *> nodeTelemetrySensorsMap[_meshtastic_TelemetrySenso
 Router *router = NULL; // Users of router don't care what sort of subclass implements that API
 
 extern BME280Sensor bme280Sensor;
-
+ServoControl servo(2); // GPIO 2
 
 const char *getDeviceName()
 {
@@ -287,9 +292,9 @@ static int32_t callGetTemperatureAndPressureAndSaveIt()
     return 900;
 }
 
-
+/*
 void sendMesh(const std::string& data) {
-    MeshPacket* p = service->allocPacket(data.length());
+    MeshPacket* p = this->allocPacket(data.length());  // If inside a module
     if (p) {
         memcpy(p->payload, data.c_str(), data.length());
         p->payloadLen = data.length();
@@ -304,7 +309,7 @@ void sendMesh(const std::string& data) {
         printf("main.cpp: Failed to allocate packet\n");
     }
 }
-
+*/
 
 void printInfo()
 {
@@ -1228,7 +1233,7 @@ appendToLog1(buffer);
 
 temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
 
-
+servo.begin();
 }
 #endif
 uint32_t rebootAtMsec;   // If not zero we will reboot at this time (used to reboot shortly after the update completes)
@@ -1263,7 +1268,7 @@ extern meshtastic_DeviceMetadata getDeviceMetadata()
 void loop()
 {
 
-
+servo.setAngle(90);
 
 // if (!verifierGyroscope()){
 //     Serial.println("IDLE");
