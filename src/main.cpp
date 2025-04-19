@@ -16,7 +16,7 @@
 #include "State.h"
 #include "motion/QMI8658/qmi.h"
 #include "SDLogger.h"
-#include "bmerawdata.h"
+#include "getDataBME68x.h"
 #include "Led.h"
 #include "RTC.h"
 #include "SPILock.h"
@@ -44,6 +44,10 @@
 #include "target_specific.h"
 #include <memory>
 #include <utility>
+
+#include "mesh/MeshModule.h"
+#include "mesh/MeshService.h"
+#include "mesh/generated/meshtastic/portnums.pb.h"
 
 #ifdef ARCH_ESP32
 #if !MESHTASTIC_EXCLUDE_WEBSERVER
@@ -179,7 +183,8 @@ bool pauseBluetoothLogging = false;
 
 bool pmu_found;
 
-BMERawData bmeSensor;
+
+BME68xReader bmeReader;
 
 #if !MESHTASTIC_EXCLUDE_I2C
 // Array map of sensor types with i2c address and wire as we'll find in the i2c scan
@@ -276,8 +281,28 @@ void GetTemperatureAndPressureAndSaveIt()
 
 static int32_t callGetTemperatureAndPressureAndSaveIt()
 {
-    GetTemperatureAndPressureAndSaveIt();
+    std::string data = bmeReader.getAllSensorData();
+    Serial.println(data.c_str()); // Affiche dans la console
+
     return 900;
+}
+
+
+void sendMesh(const std::string& data) {
+    MeshPacket* p = service->allocPacket(data.length());
+    if (p) {
+        memcpy(p->payload, data.c_str(), data.length());
+        p->payloadLen = data.length();
+
+        p->to = 0xffffffff;  // Broadcast
+        p->hopLimit = 7;
+        p->portnum = meshtastic_PortNum_PRIVATE_APP;
+
+        service->sendToMesh(p);
+        printf("main.cpp: Sent packet with data: %s\n", data.c_str());
+    } else {
+        printf("main.cpp: Failed to allocate packet\n");
+    }
 }
 
 
@@ -1191,11 +1216,18 @@ void setup()
 initSDCard();
 
 // bme280Sensor.runOnce();
-// temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
 
 RunOnceQMI();
 
-bmeSensor.begin();
+bmeReader.begin();
+
+// creation de l ente sur le fichier csv
+char buffer[128];
+snprintf(buffer, sizeof(buffer), "Temp C:, Hum %:, Press hPa:, Gaz kOhms:, Millis:");
+appendToLog1(buffer);
+
+temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
+
 
 }
 #endif
@@ -1231,7 +1263,7 @@ extern meshtastic_DeviceMetadata getDeviceMetadata()
 void loop()
 {
 
-bmeSensor.logData();
+
 
 // if (!verifierGyroscope()){
 //     Serial.println("IDLE");

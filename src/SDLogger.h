@@ -8,7 +8,7 @@
 
 // Prototype pour enregistrer des données CSV
 void appendToLog(float param1, float param2);
-void appendToLog1(float param1, float param2, float param3, float param4, float param5, float param6, float param7);
+void appendToLog1(std::string data);
 void initSDCard();
 
 #endif  // SDLOGGER_H

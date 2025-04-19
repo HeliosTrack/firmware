@@ -31,19 +31,11 @@ void initSDCard() {
     }
 }
 
-void appendToLog1(float param1, float param2, float param3, float param4, float param5, float param6, float param7) {
+void appendToLog1(std::string data) {
     File logFile = SD.open("/BME.csv", FILE_APPEND);
     if (logFile) {
-        unsigned long timestamp = millis();
-        float datas[] = {param1, param2, param3, param4, param5, param6, param7};
-
-        for (int i = 0; i < 7; i++) {
-            logFile.print(datas[i]);
-            logFile.print(",");
-        }
-        logFile.println(timestamp);
+        logFile.println(data.c_str());
         logFile.close();
-        
         Serial.println("📝 Données ajoutées !");
     } else {
         Serial.println("❌ Impossible d'écrire dans BME.csv !");
