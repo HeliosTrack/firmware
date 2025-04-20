@@ -14,6 +14,8 @@ Vous pouvez suivre les instructions de **Meshtastic**, car elles s'appliquent é
 
 Si vous rencontrez des problèmes, n'hésitez pas à nous en faire part !  
 
+Uniquemenent tester sur T-Beam Supreme.
+
 ## 📢 Partagez votre projet avec nous !
 
 *(Hors licence)* Nous serions ravis de découvrir ce que vous avez réalisé avec notre code !  
