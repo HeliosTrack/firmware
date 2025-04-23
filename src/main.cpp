@@ -48,11 +48,11 @@
 #include "mesh/MeshModule.h"
 #include "mesh/MeshService.h"
 #include "mesh/generated/meshtastic/portnums.pb.h"
-// #include "mesh/MeshPacket.h"
-
 
 #include <Arduino.h>
 #include "ServoControl.h"
+
+#include "modules/TelemetryBME688.h"
 
 #ifdef ARCH_ESP32
 #if !MESHTASTIC_EXCLUDE_WEBSERVER
@@ -167,6 +167,7 @@ ScanI2C::DeviceAddress accelerometer_found = ScanI2C::ADDRESS_NONE;
 ScanI2C::FoundDevice rgb_found = ScanI2C::FoundDevice(ScanI2C::DeviceType::NONE, ScanI2C::ADDRESS_NONE);
 
 
+
 #if !defined(ARCH_PORTDUINO) && !defined(ARCH_STM32WL)
 ATECCX08A atecc;
 #endif
@@ -185,7 +186,7 @@ bool isSDCardDetected = false;
 
 uint32_t serialSinceMsec;
 bool pauseBluetoothLogging = false;
-
+static bool alreadyCreated = false;
 bool pmu_found;
 
 
@@ -200,6 +201,8 @@ Router *router = NULL; // Users of router don't care what sort of subclass imple
 
 extern BME280Sensor bme280Sensor;
 ServoControl servo(2); // GPIO 2
+TelemetryBME688 telemetryModule;
+
 
 const char *getDeviceName()
 {
@@ -286,30 +289,13 @@ void GetTemperatureAndPressureAndSaveIt()
 
 static int32_t callGetTemperatureAndPressureAndSaveIt()
 {
-    std::string data = bmeReader.getAllSensorData();
-    Serial.println(data.c_str()); // Affiche dans la console
 
-    return 900;
+    telemetryModule.sendTelemetry();
+
+    return 18000;
 }
 
-/*
-void sendMesh(const std::string& data) {
-    MeshPacket* p = this->allocPacket(data.length());  // If inside a module
-    if (p) {
-        memcpy(p->payload, data.c_str(), data.length());
-        p->payloadLen = data.length();
 
-        p->to = 0xffffffff;  // Broadcast
-        p->hopLimit = 7;
-        p->portnum = meshtastic_PortNum_PRIVATE_APP;
-
-        service->sendToMesh(p);
-        printf("main.cpp: Sent packet with data: %s\n", data.c_str());
-    } else {
-        printf("main.cpp: Failed to allocate packet\n");
-    }
-}
-*/
 
 void printInfo()
 {
@@ -319,7 +305,7 @@ void printInfo()
 void setup()
 {
 
-
+    
 
     concurrency::hasBeenSetup = true;
 #if ARCH_PORTDUINO
@@ -1218,7 +1204,7 @@ void setup()
     powerFSMthread = new PowerFSMThread();
     setCPUFast(false); // 80MHz is fine for our slow peripherals
 
-initSDCard();
+    initSDCard();
 
 // bme280Sensor.runOnce();
 
@@ -1230,7 +1216,6 @@ bmeReader.begin();
 char buffer[128];
 snprintf(buffer, sizeof(buffer), "Temp C:, Hum %:, Press hPa:, Gaz kOhms:, Millis:");
 appendToLog1(buffer);
-
 temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
 
 servo.begin();
@@ -1270,11 +1255,14 @@ void loop()
 
 servo.setAngle(90);
 
-// if (!verifierGyroscope()){
-//     Serial.println("IDLE");
-// } else {
-//     Serial.println("Sending...");
-// }
+if (!verifierGyroscope()) {
+    Serial.println("IDLE");
+ } else {
+    if (!alreadyCreated) {
+        temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
+        alreadyCreated = true;
+    }
+}
 
 #ifdef ARCH_ESP32
     esp32Loop();

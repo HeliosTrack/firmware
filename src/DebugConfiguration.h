@@ -119,7 +119,7 @@ extern "C" void logLegacy(const char *level, const char *fmt, ...);
 #define LORA_POWER_CTRL_CH 2
 
 // Default Bluetooth PIN
-#define defaultBLEPin 123456
+#define defaultBLEPin 434349
 
 #if HAS_ETHERNET
 #include <RAK13800_W5100S.h>

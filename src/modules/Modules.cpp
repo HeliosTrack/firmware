@@ -1,4 +1,5 @@
 #include "configuration.h"
+#include "modules/TelemetryBME688.h"
 #if !MESHTASTIC_EXCLUDE_INPUTBROKER
 #include "input/ExpressLRSFiveWay.h"
 #include "input/InputBroker.h"
@@ -95,6 +96,7 @@
  */
 void setupModules()
 {
+        new TelemetryBME688();
     if (config.device.role != meshtastic_Config_DeviceConfig_Role_REPEATER) {
 #if (HAS_BUTTON || ARCH_PORTDUINO) && !MESHTASTIC_EXCLUDE_INPUTBROKER
         inputBroker = new InputBroker();
