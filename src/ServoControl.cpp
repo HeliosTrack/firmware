@@ -13,3 +13,15 @@ void ServoControl::begin() {
 void ServoControl::setAngle(int angle) {
     myServo.write(angle);
 }
+
+void ServoControl::find() {
+    for (int angle = 70; angle <= 110; angle++) {
+        myServo.write(angle);
+        Serial.println(angle);
+        delay(500);
+    }
+}
+
+void ServoControl::stop() {
+    myServo.detach();
+}

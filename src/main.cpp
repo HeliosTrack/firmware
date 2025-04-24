@@ -93,6 +93,9 @@ NRF52Bluetooth *nrf52Bluetooth = nullptr;
 #include "SX1280Interface.h"
 #include "detect/LoRaRadioType.h"
 
+#include "ServoControl.h"
+#include <ESP32Servo.h>
+
 #ifdef ARCH_STM32WL
 #include "STM32WLE5JCInterface.h"
 #endif
@@ -264,6 +267,7 @@ void lateInitVariant() {}
  */
 
 static Periodic *temperatureAndPressurePeriodic;
+static Periodic *SaveSDPeriodic;
 
 void GetTemperatureAndPressureAndSaveIt()
 {
@@ -295,7 +299,13 @@ static int32_t callGetTemperatureAndPressureAndSaveIt()
     return 18000;
 }
 
-
+static int32_t saveSD()
+{
+std::string data = bmeReader.getAllSensorData();
+const char *message = data.c_str();
+appendToLog1(message);
+return 900;
+}
 
 void printInfo()
 {
@@ -967,7 +977,7 @@ void setup()
     if (!rIf) {
         rIf = new STM32WLE5JCInterface(RadioLibHAL, SX126X_CS, SX126X_DIO1, SX126X_RESET, SX126X_BUSY);
         if (!rIf->init()) {
-            LOG_WARN("No STM32WL radio");
+            LOG_WARN("No STM32WL radio"); 
             delete rIf;
             rIf = NULL;
         } else {
@@ -1216,8 +1226,7 @@ bmeReader.begin();
 char buffer[128];
 snprintf(buffer, sizeof(buffer), "Temp C:, Hum %:, Press hPa:, Gaz kOhms:, Millis:");
 appendToLog1(buffer);
-temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
-
+SaveSDPeriodic = new Periodic("SaveDataInSD", saveSD);
 servo.begin();
 }
 #endif
@@ -1253,16 +1262,17 @@ extern meshtastic_DeviceMetadata getDeviceMetadata()
 void loop()
 {
 
-servo.setAngle(90);
 
-if (!verifierGyroscope()) {
-    Serial.println("IDLE");
- } else {
-    if (!alreadyCreated) {
-        temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
-        alreadyCreated = true;
-    }
+if (verifierGyroscope() && !alreadyCreated) {
+    Serial.println("Mouvement détecté et attente de 30s terminée. Création de la tâche.");
+    servo.setAngle(100);
+    delay(2200);
+    servo.setAngle(90);
+    servo.stop();
+    temperatureAndPressurePeriodic = new Periodic("TemperatureAndPressure", callGetTemperatureAndPressureAndSaveIt);
+    alreadyCreated = true;
 }
+
 
 #ifdef ARCH_ESP32
     esp32Loop();
@@ -1270,7 +1280,8 @@ if (!verifierGyroscope()) {
 #ifdef ARCH_NRF52
     nrf52Loop();
 #endif
-    powerCommandsCheck();
+
+powerCommandsCheck();
 
 #ifdef DEBUG_STACK
     static uint32_t lastPrint = 0;
@@ -1283,10 +1294,10 @@ if (!verifierGyroscope()) {
     service->loop();
 
     long delayMsec = mainController.runOrDelay();
-
     // On veut dormir aussi longtemps que possible ici - pour économiser de l'énergie
     if (!runASAP && loopCanSleep()) {
         mainDelay.delay(delayMsec);
     }
+
 }
 #endif

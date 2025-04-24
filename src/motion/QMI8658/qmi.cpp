@@ -41,8 +41,7 @@ SPIClass SDCardSPI(HSPI);
 
 void RunOnceQMI()
 {
-    Serial.begin(115200);
-    while (!Serial);
+    // enculer de  while (!Serial);
 
 
     pinMode(SPI_CS, OUTPUT);    //sdcard pin set high

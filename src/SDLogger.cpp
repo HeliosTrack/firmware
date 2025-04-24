@@ -36,7 +36,6 @@ void appendToLog1(std::string data) {
     if (logFile) {
         logFile.println(data.c_str());
         logFile.close();
-        Serial.println("📝 Données ajoutées !");
     } else {
         Serial.println("❌ Impossible d'écrire dans BME.csv !");
     }

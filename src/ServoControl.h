@@ -8,6 +8,8 @@ public:
     ServoControl(int pin);
     void begin();
     void setAngle(int angle);
+    void find();
+    void stop();
 
 private:
     int _pin;

@@ -33,8 +33,8 @@ std::string BME68xReader::getAllSensorData() {
 
     char buffer[128];
     snprintf(buffer, sizeof(buffer),
-             "%.2f,%.2f,%.2f,%.2f, %.2f",
-             temperature, humidity, pressure, gasResistance, millis());
+             "%.2f,%.2f,%.2f,%.2f",
+             temperature, humidity, pressure, gasResistance);
     appendToLog1(buffer);
     return std::string(buffer);
 }
