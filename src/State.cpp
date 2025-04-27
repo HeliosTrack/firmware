@@ -1,7 +1,6 @@
 #include "State.h"
 
 bool arretRecuperation = false;
-bool mouvementDetecte = false;
 unsigned long startTime = 0;
 
 bool verifierGyroscope() {
@@ -14,13 +13,12 @@ bool verifierGyroscope() {
         
         // Serial.println(millis() - startTime);
 
-        if (mouvement && !mouvementDetecte) {
-            mouvementDetecte = true;
+        if (mouvement) {
             startTime = millis();
             Serial.println("Détection de mouvement - démarrage du chrono");
         }
 
-        if (mouvementDetecte && millis() - startTime > 90000) {
+        if (millis() - startTime > 90000) {
             arretRecuperation = true;
             Serial.println("Arret recuperation après 30 secondes");
         }

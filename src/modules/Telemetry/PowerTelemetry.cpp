@@ -37,8 +37,8 @@ int32_t PowerTelemetryModule::runOnce()
         without having to configure it from the PythonAPI or WebUI.
     */
 
-    moduleConfig.telemetry.power_measurement_enabled = 1;
-    moduleConfig.telemetry.power_screen_enabled = 1;
+    moduleConfig.telemetry.power_measurement_enabled = 0;
+    moduleConfig.telemetry.power_screen_enabled = 0;
     moduleConfig.telemetry.power_update_interval = 0;
 
     if (!(moduleConfig.telemetry.power_measurement_enabled)) {

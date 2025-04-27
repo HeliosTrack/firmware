@@ -203,7 +203,7 @@ std::pair<uint8_t, TwoWire *> nodeTelemetrySensorsMap[_meshtastic_TelemetrySenso
 Router *router = NULL; // Users of router don't care what sort of subclass implements that API
 
 extern BME280Sensor bme280Sensor;
-ServoControl servo(2); // GPIO 2
+ServoControl servo(3); // GPIO 2
 TelemetryBME688 telemetryModule;
 
 
